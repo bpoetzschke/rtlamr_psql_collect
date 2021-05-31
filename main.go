@@ -26,5 +26,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer db.Close()
+	defer func() {
+		closeErr := db.Close()
+		if closeErr != nil {
+			log.Errorf("Failed to close db connection: %s", closeErr)
+		}
+	}()
 }
