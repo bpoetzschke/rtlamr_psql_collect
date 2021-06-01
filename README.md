@@ -17,13 +17,13 @@ go get github.com/bemasher/rtlamr
 ```
 
 # Installation
-Install `rtlamr-psql-collect` by running:
+Install `rtlamr_psql_collect` by running:
 ```bash
-go get github.com/bpoetzschke/rtlamr-psql-collect
+go get github.com/bpoetzschke/rtlamr_psql_collect
 ```
 
 # Usage
-`rtlamr-psql-collect` is entirely configured through environment variables.
+`rtlamr_psql_collect` is entirely configured through environment variables.
 
 - `DEBUG` - enable debug log
 - `DB_HOST` - Database host; required
