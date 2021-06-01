@@ -49,10 +49,12 @@ func (r *client) setup() error {
 	}
 
 	if cfg.FilterIDs != "" {
+		log.Debugf("Using rltamr with filter ids: %s", cfg.FilterIDs)
 		r.cmdArgs = append(r.cmdArgs, fmt.Sprintf("-filterid=%s", cfg.FilterIDs))
 	}
 
 	if cfg.Server != "" {
+		log.Debugf("Using rtlamr with server: %s", cfg.Server)
 		r.cmdArgs = append(r.cmdArgs, fmt.Sprintf("-server=%s", cfg.Server))
 	}
 
