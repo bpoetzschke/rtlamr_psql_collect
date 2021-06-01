@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/bpoetzschke/rtlamr_psql_collect/database"
+	"github.com/bpoetzschke/rtlamr_psql_collect/repositories"
+	"github.com/bpoetzschke/rtlamr_psql_collect/rtlamrclient"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +25,7 @@ func main() {
 	db, err := database.Init()
 	if err != nil {
 		log.Errorf("Failed to connect to database: %s", err)
-		os.Exit(1)
+		return
 	}
 
 	defer func() {
@@ -32,4 +34,16 @@ func main() {
 			log.Errorf("Failed to close db connection: %s", closeErr)
 		}
 	}()
+
+	repo := repositories.NewRTLAMRRepo(db)
+	rtlAmr, err := rtlamrclient.New(repo)
+	if err != nil {
+		log.Errorf("Error while initializing rtl amr: %s", err)
+		return
+	}
+
+	err = rtlAmr.Run()
+	if err != nil {
+		log.Errorf("Error while running rtl amr: %s", err)
+	}
 }
