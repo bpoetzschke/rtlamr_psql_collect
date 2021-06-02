@@ -8,7 +8,7 @@ import (
 )
 
 type ClientData struct {
-	Time    time.Time         `json:"time"`
+	Time    string            `json:"time"`
 	Type    string            `json:"type"`
 	Message ClientDataMessage `json:"message"`
 }
@@ -19,12 +19,17 @@ type ClientDataMessage struct {
 	Consumption int64 `json:"consumption"`
 }
 
-func (cd ClientData) ToRTLAMRData() models.RTLAMRData {
+func (cd ClientData) ToRTLAMRData() (models.RTLAMRData, error) {
+	parsedTime, err := time.Parse(time.RFC3339, cd.Time)
+	if err != nil {
+		return models.RTLAMRData{}, err
+	}
+
 	return models.RTLAMRData{
-		CreatedAt:      cd.Time,
+		CreatedAt:      parsedTime.UTC(),
 		MeterID:        fmt.Sprintf("%d", cd.Message.ID),
 		MeterType:      fmt.Sprintf("%d", cd.Message.Type),
 		CurrentReading: cd.Message.Consumption,
 		Difference:     0,
-	}
+	}, nil
 }
