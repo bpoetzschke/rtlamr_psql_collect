@@ -126,7 +126,10 @@ func (r client) processStderrPipe(reader io.ReadCloser) {
 }
 
 func (r client) processData(data *ClientData) error {
-	rtlAMRData := data.ToRTLAMRData()
+	rtlAMRData, err := data.ToRTLAMRData()
+	if err != nil {
+		return err
+	}
 
 	lastData, found, err := r.repo.GetLastReading(rtlAMRData.MeterID)
 	if err != nil {
