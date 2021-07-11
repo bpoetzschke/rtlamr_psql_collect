@@ -78,6 +78,7 @@ func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
 			if killErr != nil {
 				log.Errorf("Error while killing process: %s. %s", rtlTCPCmd.Path, err)
 			}
+			return nil
 		case err := <-c.errChan:
 			return err
 		}
