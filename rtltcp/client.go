@@ -19,14 +19,16 @@ type Client interface {
 
 func NewClient() Client {
 	c := client{
-		done: make(chan struct{}),
+		done:    make(chan struct{}),
+		errChan: make(chan error),
 	}
 
 	return &c
 }
 
 type client struct {
-	done chan struct{}
+	done    chan struct{}
+	errChan chan error
 }
 
 func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
@@ -58,9 +60,11 @@ func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
 		err = rtlTCPCmd.Wait()
 		if err != nil {
 			log.Errorf("Error while waiting for command %s to finish.", rtlTCPCmd.String())
+			c.errChan <- err
+			close(c.errChan)
+		} else {
+			close(c.done)
 		}
-
-		close(c.done)
 	}()
 
 	for {
@@ -74,6 +78,8 @@ func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
 			if killErr != nil {
 				log.Errorf("Error while killing process: %s. %s", rtlTCPCmd.Path, err)
 			}
+		case err := <-c.errChan:
+			return err
 		}
 	}
 }

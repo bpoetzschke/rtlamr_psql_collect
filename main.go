@@ -67,6 +67,7 @@ func main() {
 	err = rtlTCP.Run(ctx, startedChan)
 	if err != nil {
 		log.Errorf("Error while starting rtl_tcp command: %s", err)
+		os.Exit(1)
 	}
 
 	log.Info("Wait until rtl_tcp command started.")
