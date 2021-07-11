@@ -50,6 +50,7 @@ func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
 
 	err = rtlTCPCmd.Start()
 	if err != nil {
+		log.Errorf("Error starting rtltcp.")
 		return err
 	}
 
