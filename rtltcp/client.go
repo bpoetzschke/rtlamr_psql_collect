@@ -14,7 +14,7 @@ import (
 var execCmd = exec.Command
 
 type Client interface {
-	Run(ctx context.Context) error
+	Run(ctx context.Context, startedChan chan struct{}) error
 }
 
 func NewClient() Client {
@@ -31,7 +31,7 @@ type client struct {
 	errChan chan error
 }
 
-func (c *client) Run(ctx context.Context) error {
+func (c *client) Run(ctx context.Context, startedChan chan struct{}) error {
 	rtlTCPCmd := execCmd("rtl_tcp")
 
 	stdOutReader, err := rtlTCPCmd.StdoutPipe()
@@ -54,6 +54,8 @@ func (c *client) Run(ctx context.Context) error {
 	}
 
 	go func() {
+		startedChan <- struct{}{}
+		close(startedChan)
 		err = rtlTCPCmd.Wait()
 		if err != nil {
 			log.Errorf("Error while waiting for command %s to finish.", rtlTCPCmd.String())
@@ -87,7 +89,7 @@ func (c *client) processStdOutPipe(reader io.ReadCloser) {
 	for scanner.Scan() {
 		msg := scanner.Text()
 
-		log.Debug(msg)
+		log.Debug("rtl_tcp: %s", msg)
 	}
 }
 
@@ -97,6 +99,6 @@ func (c *client) processStdErrPipe(reader io.ReadCloser) {
 	for scanner.Scan() {
 		msg := scanner.Text()
 
-		log.Error(msg)
+		log.Error("rtl_tcp: %s", msg)
 	}
 }

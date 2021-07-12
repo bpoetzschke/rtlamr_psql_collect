@@ -121,13 +121,13 @@ func (r client) processStdoutPipe(reader io.ReadCloser) {
 		var data ClientData
 		err := json.Unmarshal([]byte(rawData), &data)
 		if err != nil {
-			log.Errorf("Error parsing client data: %s", err)
+			log.Errorf("rtl_amr: Error parsing client data: %s", err)
 			continue
 		}
 
 		err = r.processData(&data)
 		if err != nil {
-			log.Errorf("Error processing data %#v: %s", data, err)
+			log.Errorf("rtl_amr: Error processing data %#v: %s", data, err)
 		}
 	}
 }
@@ -140,7 +140,7 @@ func (r client) processStderrPipe(reader io.ReadCloser) {
 		// This is filtering them out to keep the error log clean
 		if !strings.Contains(msg, "decode.go") &&
 			!strings.Contains(msg, "GainCount: ") {
-			log.Errorln(msg)
+			log.Errorf("rtl_amr: %s\n", msg)
 		}
 	}
 }
@@ -165,7 +165,7 @@ func (r client) processData(data *ClientData) error {
 	}
 
 	if !stored {
-		log.Infof("Did not store reading of %d for meter %s.", rtlAMRData.CurrentReading, rtlAMRData.MeterID)
+		log.Infof("rtl_tcp: Did not store reading of %d for meter %s.", rtlAMRData.CurrentReading, rtlAMRData.MeterID)
 	}
 
 	return nil

@@ -62,15 +62,19 @@ func main() {
 		}
 	}()
 
+	startedChan := make(chan struct{}, 1)
+
 	rtlTCP := rtltcp.NewClient()
 	go func() {
-		err := rtlTCP.Run(cancelCtx)
+		err := rtlTCP.Run(cancelCtx, startedChan)
 		if err != nil {
 			log.Errorf("Error while running rtl_tcp command: %s", err)
 			cancelFunc()
 		}
 	}()
 
+	log.Info("Wait for rtl_tcp to start")
+	<-startedChan
 	log.Info("Start rtlamr")
 
 	repo := repositories.NewRTLAMRRepo(db)
