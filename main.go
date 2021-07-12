@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bpoetzschke/rtlamr_psql_collect/database"
 	"github.com/bpoetzschke/rtlamr_psql_collect/repositories"
@@ -73,8 +74,15 @@ func main() {
 		}
 	}()
 
-	log.Info("Wait for rtl_tcp to start")
-	<-startedChan
+	log.Info("Wait 10s for rtl_tcp to start")
+
+	select {
+	case <-cancelCtx.Done():
+		log.Error("Context was canceled. Exit.")
+		os.Exit(-1)
+	case <-time.After(10 * time.Second):
+	}
+
 	log.Info("Start rtlamr")
 
 	repo := repositories.NewRTLAMRRepo(db)
