@@ -24,8 +24,7 @@ func setupLogger() {
 	}
 }
 
-func setupSignalHandlers(ctx context.Context) context.Context {
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
+func setupSignalHandlers(cancelFunc context.CancelFunc) context.Context {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGTERM)
 
@@ -39,15 +38,15 @@ func setupSignalHandlers(ctx context.Context) context.Context {
 			}
 		}
 	}()
-
-	return cancelCtx
 }
 
 func main() {
 	setupLogger()
 
 	ctx := context.Background()
-	ctx = setupSignalHandlers(ctx)
+	cancelCtx, cancelFunc := context.WithCancel(ctx)
+
+	ctx = setupSignalHandlers(cancelFunc)
 
 	db, err := database.Init()
 	if err != nil {
@@ -63,17 +62,17 @@ func main() {
 	}()
 
 	rtlTCP := rtltcp.NewClient()
-	startedChan := make(chan struct{}, 1)
-	err = rtlTCP.Run(ctx, startedChan)
-	if err != nil {
-		log.Errorf("Error while starting rtl_tcp command: %s", err)
-		os.Exit(1)
-	}
+	errChan := rtlTCP.Run(cancelCtx)
 
-	log.Info("Wait until rtl_tcp command started.")
-	<-startedChan
-
-	log.Info("rtl_tcp command started, starting rtlamr command.")
+	go func() {
+		for {
+			select {
+			case err := <-errChan:
+				log.Errorf("Error when running rtl_tcp command: %s", err)
+				cancelFunc()
+			}
+		}
+	}()
 
 	repo := repositories.NewRTLAMRRepo(db)
 	rtlAmr, err := rtlamrclient.New(repo)
@@ -82,7 +81,7 @@ func main() {
 		return
 	}
 
-	err = rtlAmr.Run(ctx)
+	err = rtlAmr.Run(cancelCtx)
 	if err != nil {
 		log.Errorf("Error while running rtl amr: %s", err)
 	}
