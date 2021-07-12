@@ -14,12 +14,13 @@ import (
 var execCmd = exec.Command
 
 type Client interface {
-	Run(ctx context.Context) chan error
+	Run(ctx context.Context) error
 }
 
 func NewClient() Client {
 	c := client{
-		done: make(chan struct{}),
+		done:    make(chan struct{}),
+		errChan: make(chan error),
 	}
 
 	return &c
@@ -30,59 +31,54 @@ type client struct {
 	errChan chan error
 }
 
-func (c *client) Run(ctx context.Context) chan error {
-	errChan := make(chan error)
+func (c *client) Run(ctx context.Context) error {
 	rtlTCPCmd := execCmd("rtl_tcp")
 
 	stdOutReader, err := rtlTCPCmd.StdoutPipe()
 	if err != nil {
-		errChan <- err
-		return errChan
+		return err
 	}
 
 	go c.processStdOutPipe(stdOutReader)
 
 	stdErrReader, err := rtlTCPCmd.StderrPipe()
 	if err != nil {
-		errChan <- err
-		return errChan
+		return err
 	}
 
 	go c.processStdErrPipe(stdErrReader)
 
 	err = rtlTCPCmd.Start()
 	if err != nil {
-		errChan <- err
-		return errChan
+		return err
 	}
 
 	go func() {
 		err = rtlTCPCmd.Wait()
 		if err != nil {
 			log.Errorf("Error while waiting for command %s to finish.", rtlTCPCmd.String())
+			c.errChan <- err
 		}
 
 		close(c.done)
 	}()
 
-	go func() {
-		for {
-			select {
-			case <-c.done:
-				log.Infof("Command %s finished runnig.", rtlTCPCmd.String())
-				return
-			case <-ctx.Done():
-				log.Infof("Context was terminated. Stopping %s process.", rtlTCPCmd.String())
-				killErr := rtlTCPCmd.Process.Kill()
-				if killErr != nil {
-					log.Errorf("Error while killing process: %s. %s", rtlTCPCmd.Path, err)
-				}
-				return
+	for {
+		select {
+		case <-c.done:
+			log.Infof("Command %s finished runnig.", rtlTCPCmd.String())
+			return nil
+		case <-ctx.Done():
+			log.Infof("Context was terminated. Stopping %s process.", rtlTCPCmd.String())
+			killErr := rtlTCPCmd.Process.Kill()
+			if killErr != nil {
+				log.Errorf("Error while killing process: %s. %s", rtlTCPCmd.Path, err)
 			}
+			return nil
+		case err := <-c.errChan:
+			return err
 		}
-	}()
-
-	return errChan
+	}
 }
 
 func (c *client) processStdOutPipe(reader io.ReadCloser) {

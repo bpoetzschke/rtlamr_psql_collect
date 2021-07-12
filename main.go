@@ -63,15 +63,11 @@ func main() {
 	}()
 
 	rtlTCP := rtltcp.NewClient()
-	errChan := rtlTCP.Run(cancelCtx)
-
 	go func() {
-		for {
-			select {
-			case err := <-errChan:
-				log.Errorf("Error when running rtl_tcp command: %s", err)
-				cancelFunc()
-			}
+		err := rtlTCP.Run(cancelCtx)
+		if err != nil {
+			log.Errorf("Error while running rtl_tcp command: %s", err)
+			cancelFunc()
 		}
 	}()
 
