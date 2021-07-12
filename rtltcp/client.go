@@ -99,6 +99,6 @@ func (c *client) processStdErrPipe(reader io.ReadCloser) {
 	for scanner.Scan() {
 		msg := scanner.Text()
 
-		log.Error("rtl_tcp: %s", msg)
+		log.Errorf("rtl_tcp: %s", msg)
 	}
 }
