@@ -24,7 +24,7 @@ func setupLogger() {
 	}
 }
 
-func setupSignalHandlers(cancelFunc context.CancelFunc) context.Context {
+func setupSignalHandlers(cancelFunc context.CancelFunc) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGTERM)
 
@@ -38,6 +38,7 @@ func setupSignalHandlers(cancelFunc context.CancelFunc) context.Context {
 			}
 		}
 	}()
+
 }
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
 	ctx := context.Background()
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 
-	ctx = setupSignalHandlers(cancelFunc)
+	setupSignalHandlers(cancelFunc)
 
 	db, err := database.Init()
 	if err != nil {
@@ -73,6 +74,8 @@ func main() {
 			}
 		}
 	}()
+
+	log.Info("Start rtlamr")
 
 	repo := repositories.NewRTLAMRRepo(db)
 	rtlAmr, err := rtlamrclient.New(repo)
