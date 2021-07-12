@@ -57,7 +57,7 @@ func (r *client) setup() error {
 	}
 
 	if cfg.FilterIDs != "" {
-		log.Debugf("Using rltamr with filter ids: %s", cfg.FilterIDs)
+		log.Infof("Using rltamr with filter ids: %s", cfg.FilterIDs)
 		r.cmdArgs = append(r.cmdArgs, fmt.Sprintf("-filterid=%s", cfg.FilterIDs))
 	}
 
