@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine
+FROM golang:1.16-buster
 
 ADD ./ /rtlamr_psql_collect
 
@@ -6,7 +6,7 @@ WORKDIR /rtlamr_psql_collect
 RUN go build
 RUN go get github.com/bemasher/rtlamr
 
-FROM alpine:latest
+FROM debian:buster-20210621
 
 ARG DEBUG
 ARG DB_HOST
@@ -18,5 +18,5 @@ ARG RTLAMR_FILTERID
 
 COPY --from=0 /rtlamr_psql_collect/rtlamr_psql_collect /app/rtlamr_psql_collect
 COPY --from=0 /go/bin/rtlamr /usr/local/bin/rtlamr
-RUN apk add rtl-sdr
+RUN apt update && apt install -y rtl-sdr && apt autoremove --purge
 CMD /app/rtlamr_psql_collect
